@@ -1,4 +1,5 @@
 version: '3'
+dotenv: [.env]
 
 vars:
   PACKAGE_IMPORT_NAME: mlops_course
@@ -16,7 +17,7 @@ tasks:
     cmds:
       - rm -rf .venv
       - task: create-venv
-      - GITHUB_TOKEN="" uv sync --extra dev
+      - env -u GITHUB_TOKEN uv sync --extra dev
 
   sync-test:
     desc: Sync only test dependencies
