@@ -5,6 +5,10 @@
 bundle:
   name: marvelous-databricks-course-Przemk00
 
+sync:
+  include:
+    - ./dist/*.whl
+
 targets:
   dev:
     mode: development
