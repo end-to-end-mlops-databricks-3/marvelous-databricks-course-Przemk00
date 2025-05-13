@@ -1,52 +1,67 @@
-# OS X
+# VS Code & Databricks specific
+.vscode/*
+.history
+.databricks
+.dbx/
+workspace/ # For Databricks Bundles if local workspace files are synced
+uv.lock
+.devcontainer
+
+# OS specific
 .DS_Store
 
-# Byte-compiled / optimized / DLL files
+# Python build artifacts & cache
+src/*.egg-info
+src/default_detection/__pycache__/
+src/default_detection/models/__pycache__/ # Anticipating a models sub-module
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
-
-# Folders
-# data/
-
-# Distribution / packaging
-.Python
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
+*.egg-info/ # General egg-info
+pip-wheel-metadata/
 *.egg
-MANIFEST
+*.so # C extensions
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# Virtual environment
+venv/
+.env/
+env/ # Common alternative to venv
+ENV/
+*.env # Environment variable files
+*.venv
+env.bak/
+venv.bak/
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
+# Logs and debug
+logs/
+*.log # General log files
+debug.log
+
+# MLflow artifacts and experiment tracking
+mlruns/
+mlflow.db
+
+# IDE / Editor settings (general)
+.idea/ # IntelliJ
+.ropeproject # Rope
+.spyderproject
+.spyproject
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Testing
+test-reports/
 .coverage
 .coverage.*
-.cache
+htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
@@ -56,44 +71,16 @@ coverage.xml
 # PyBuilder
 target/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
 # pyenv
 .python-version
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+# Other
+MANIFEST
+.installed.cfg
+pip-log.txt
+pip-delete-this-directory.txt
+*.manifest
+*.spec
 
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Pycharm Project Settings
-.idea/
-
-# Rope project settings
-.ropeproject
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# R project files
-**.Rproj
-*.utf8.md
-*.knit.md
-.Rproj.user
-
-# VS code configuration
-.vscode
-.history
-
-.databricks
+# Custom files / Wheels
+**/*.whl
