@@ -1,0 +1,74 @@
+# Databricks notebook source
+
+# % pip install -e ..
+# %restart_python
+
+# from pathlib import Path
+# import sys
+# sys.path.append(str(Path.cwd().parent / 'src'))
+
+# COMMAND ----------
+from loguru import logger
+import yaml
+import sys
+from pyspark.sql import SparkSession
+import pandas as pd
+
+from default_detection.config import ProjectConfig
+from default_detection.data_processor import DataProcessor
+from marvelous.logging import setup_logging
+from marvelous.timer import Timer
+
+config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
+
+setup_logging(log_file="logs/marvelous-1.log") # Assuming 'logs' directory exists or will be created relative to notebook execution
+
+logger.info("Configuration loaded:")
+logger.info(yaml.dump(config, default_flow_style=False))
+
+# COMMAND ----------
+
+# Load the dataset
+spark = SparkSession.builder.getOrCreate()
+
+filepath = "../data/data.xls" # Adjusted for your data file
+
+# Load the data
+# Note: Using pd.read_excel for .xls file. Ensure 'openpyxl' or 'xlrd' is installed in your environment.
+try:
+    df = pd.read_excel(filepath) 
+except ImportError as e:
+    logger.error(f"Failed to read Excel file. Make sure 'openpyxl' or 'xlrd' is installed: {e}")
+    raise
+except FileNotFoundError:
+    logger.error(f"Data file not found at: {filepath}")
+    raise
+
+
+# COMMAND ----------
+# Load the dataset
+with Timer() as preprocess_timer:
+    # Initialize DataProcessor
+    data_processor = DataProcessor(df, config, spark)
+
+    # Preprocess the data
+    data_processor.preprocess()
+
+logger.info(f"Data preprocessing: {preprocess_timer}")
+
+# COMMAND ----------
+
+# Split the data
+X_train, X_test = data_processor.split_data()
+logger.info("Training set shape: %s", X_train.shape)
+logger.info("Test set shape: %s", X_test.shape)
+
+# COMMAND ----------
+# Save to catalog
+logger.info("Saving data to catalog")
+data_processor.save_to_catalog(X_train, X_test)
+
+# Enable change data feed (only once!)
+logger.info("Enable change data feed")
+data_processor.enable_change_data_feed()
+# COMMAND ----------
