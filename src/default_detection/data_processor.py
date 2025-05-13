@@ -1,6 +1,5 @@
 """Data preprocessing module."""
 
-import datetime
 import logging
 
 import pandas as pd
@@ -51,17 +50,19 @@ class DataProcessor:
         self.logger.info(f"Attempting to convert numeric features: {self.config.num_features}")
         for num_col in self.config.num_features:
             if num_col in self.df.columns:
-                self.df[num_col] = pd.to_numeric(self.df[num_col], errors='coerce')
-                if self.df[num_col].isnull().any(): # Should not happen based on schema
-                    self.logger.warning(f"NaNs introduced in numeric column '{num_col}' after to_numeric. Dataset schema indicated no missing values.")
+                self.df[num_col] = pd.to_numeric(self.df[num_col], errors="coerce")
+                if self.df[num_col].isnull().any():  # Should not happen based on schema
+                    self.logger.warning(
+                        f"NaNs introduced in numeric column '{num_col}' after to_numeric. Dataset schema indicated no missing values."
+                    )
                 self.logger.info(f"Converted '{num_col}' to numeric.")
             else:
                 self.logger.warning(f"Configured numeric feature '{num_col}' not found in DataFrame.")
-        
+
         # Ensure target variable is numeric (binary 0/1)
         # Assumes self.config.target = "Y"
         if self.config.target in self.df.columns:
-            self.df[self.config.target] = pd.to_numeric(self.df[self.config.target], errors='raise')
+            self.df[self.config.target] = pd.to_numeric(self.df[self.config.target], errors="raise")
             self.logger.info(f"Converted target column '{self.config.target}' to numeric.")
         else:
             raise ValueError(f"Target column '{self.config.target}' as configured was not found in DataFrame.")
@@ -69,21 +70,25 @@ class DataProcessor:
         # Select only relevant columns as defined in config + ID (if present) + target
         all_configured_features = self.config.num_features + self.config.cat_features
         features_present_in_df = [col for col in all_configured_features if col in self.df.columns]
-        
+
         columns_to_keep = features_present_in_df + [self.config.target]
         # Add ID to columns_to_keep if it exists in df and is not already part of features/target
         if "ID" in self.df.columns and "ID" not in columns_to_keep:
             columns_to_keep.append("ID")
-        
+
         missing_configured_features = set(all_configured_features) - set(features_present_in_df)
         if missing_configured_features:
-            self.logger.warning(f"The following configured features are not in the DataFrame and will be ignored for final selection: {missing_configured_features}")
+            self.logger.warning(
+                f"The following configured features are not in the DataFrame and will be ignored for final selection: {missing_configured_features}"
+            )
 
         # Ensure all columns_to_keep actually exist in the df before selection
         final_columns_to_keep = [col for col in columns_to_keep if col in self.df.columns]
         self.df = self.df[final_columns_to_keep]
-        
-        self.logger.info(f"Preprocessing for credit card default data complete. Final DataFrame shape: {self.df.shape}. Columns: {self.df.columns.tolist()}")
+
+        self.logger.info(
+            f"Preprocessing for credit card default data complete. Final DataFrame shape: {self.df.shape}. Columns: {self.df.columns.tolist()}"
+        )
 
     def split_data(self, test_size: float = 0.2, random_state: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Split the DataFrame (self.df) into training and test sets.
@@ -117,7 +122,6 @@ class DataProcessor:
             f"{self.config.catalog_name}.{self.config.schema_name}.test_set"
         )
         self.logger.info(f"Saved train and test sets to {self.config.catalog_name}.{self.config.schema_name}")
-
 
     def enable_change_data_feed(self) -> None:
         """Enable Change Data Feed for train and test set tables.

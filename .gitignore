@@ -4,7 +4,7 @@
 .databricks
 .dbx/
 workspace/ # For Databricks Bundles if local workspace files are synced
-uv.lock
+# uv.lock
 .devcontainer
 
 # OS specific
