@@ -31,15 +31,11 @@ logger.info(yaml.dump(config, default_flow_style=False))
 # Load the dataset
 spark = SparkSession.builder.getOrCreate()
 
-filepath = "../data/data.xls" # Adjusted for your data file
+filepath = "../data/data.csv" # Adjusted for your data file
 
 # Load the data
-# Note: Using pd.read_excel for .xls file. Ensure 'openpyxl' or 'xlrd' is installed in your environment.
 try:
-    df = pd.read_excel(filepath) 
-except ImportError as e:
-    logger.error(f"Failed to read Excel file. Make sure 'openpyxl' or 'xlrd' is installed: {e}")
-    raise
+    df = pd.read_csv(filepath)
 except FileNotFoundError:
     logger.error(f"Data file not found at: {filepath}")
     raise

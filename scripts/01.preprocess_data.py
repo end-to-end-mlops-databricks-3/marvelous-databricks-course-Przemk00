@@ -28,13 +28,10 @@ logger.info(yaml.dump(config, default_flow_style=False))
 spark = SparkSession.builder.appName("DefaultDetectionPreprocessing").getOrCreate()
 
 # Load the dataset using pandas
-data_file_path = "../data/data.xls" # Relative to the script's location
+data_file_path = "../data/data.csv" # Relative to the script's location
 logger.info(f"Loading data from: {data_file_path}")
 try:
-    df = pd.read_excel(data_file_path)
-except ImportError as e:
-    logger.error(f"Failed to read Excel file '{data_file_path}'. Ensure 'openpyxl' or 'xlrd' is installed: {e}")
-    raise
+    df = pd.read_csv(data_file_path)
 except FileNotFoundError:
     logger.error(f"Data file not found at: {data_file_path}")
     raise
