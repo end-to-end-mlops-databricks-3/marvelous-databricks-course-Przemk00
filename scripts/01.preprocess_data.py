@@ -11,11 +11,11 @@ from marvelous.logging import setup_logging
 from marvelous.timer import Timer
 
 # COMMAND ----------
-config_path = "../project_config.yml"
+config_path = "project_config.yml"
 
 config = ProjectConfig.from_yaml(config_path=config_path, env="dev")
 
-log_file_path = "../logs/01.preprocess_data.log"
+log_file_path = "logs/01.preprocess_data.log"
 setup_logging(log_file=log_file_path)
 logger.info(f"Logging to: {log_file_path}")
 
@@ -24,10 +24,10 @@ logger.info(yaml.dump(config, default_flow_style=False))
 
 spark = SparkSession.builder.appName("DefaultDetectionPreprocessing").getOrCreate()
 
-data_file_path = "../data/data.csv"
+data_file_path = "data/data.csv"
 logger.info(f"Loading data from: {data_file_path}")
 try:
-    df = pd.read_csv(data_file_path, sep=';', header=0, skiprows=[1])
+    df = pd.read_csv(data_file_path, sep=';')
 except FileNotFoundError:
     logger.error(f"Data file not found at: {data_file_path}")
     raise
