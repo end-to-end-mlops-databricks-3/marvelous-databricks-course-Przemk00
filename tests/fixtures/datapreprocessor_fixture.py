@@ -56,7 +56,7 @@ def sample_data(config: ProjectConfig, spark_session: SparkSession) -> pd.DataFr
     :return: A sampled Pandas DataFrame containing some sample of the original data.
     """
     file_path = PROJECT_DIR / "tests" / "test_data" / "sample.csv"
-    sample = pd.read_csv(file_path.as_posix())
+    sample = pd.read_csv(file_path.as_posix(), sep=";")
 
     # Alternative approach to reading the sample
     # Important Note: Replace NaN with None in Pandas Before Conversion to Spark DataFrame:

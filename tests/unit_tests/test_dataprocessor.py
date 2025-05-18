@@ -4,9 +4,10 @@ import pandas as pd
 import pytest
 from conftest import CATALOG_DIR
 from delta.tables import DeltaTable
-
 from pyspark.sql import SparkSession
 
+from default_detection.config import ProjectConfig
+from default_detection.data_processor import DataProcessor
 
 def test_data_ingestion(sample_data: pd.DataFrame) -> None:
     """Test the data ingestion process by checking the shape of the sample data.
@@ -51,7 +52,7 @@ def test_column_transformations(sample_data: pd.DataFrame, config: ProjectConfig
     processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
     processor.preprocess()
 
-    assert processor.df["Id"].dtype == "object"
+    assert processor.df["ID"].dtype == "int64"
     assert processor.df["X2"].dtype == "category"
     assert processor.df["X3"].dtype == "category"
     assert processor.df["X1"].dtype == "int64"  
