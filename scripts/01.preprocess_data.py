@@ -15,7 +15,7 @@ config_path = "../project_config.yml"
 
 config = ProjectConfig.from_yaml(config_path=config_path, env="dev")
 
-log_file_path = (Path(__file__).parent / "../logs/01.preprocess_data.log").resolve()
+log_file_path = "../logs/01.preprocess_data.log"
 setup_logging(log_file=log_file_path)
 logger.info(f"Logging to: {log_file_path}")
 
@@ -24,7 +24,7 @@ logger.info(yaml.dump(config, default_flow_style=False))
 
 spark = SparkSession.builder.appName("DefaultDetectionPreprocessing").getOrCreate()
 
-data_file_path = (Path(__file__).parent / "../data/data.csv").resolve()
+data_file_path = "../data/data.csv"
 logger.info(f"Loading data from: {data_file_path}")
 try:
     df = pd.read_csv(data_file_path, sep=';', header=0, skiprows=[1])
@@ -48,6 +48,6 @@ logger.info(f"Test set shape: {X_test.shape}")
 logger.info("Saving data to catalog")
 data_processor.save_to_catalog(X_train, X_test)
 
-logger.info("Script 01.preprocess_data.py finished.")
+logger.info("Script finished.")
 # COMMAND ----------
 
