@@ -1,3 +1,4 @@
+# Databricks notebook source
 import argparse
 import pandas as pd
 import yaml
@@ -9,6 +10,7 @@ from default_detection.data_processor import DataProcessor
 from marvelous.logging import setup_logging 
 from marvelous.timer import Timer
 
+# COMMAND ----------
 config_path = "../project_config.yml"
 
 config = ProjectConfig.from_yaml(config_path=config_path, env="dev")
@@ -25,7 +27,7 @@ spark = SparkSession.builder.appName("DefaultDetectionPreprocessing").getOrCreat
 data_file_path = "../data/data.csv"
 logger.info(f"Loading data from: {data_file_path}")
 try:
-    df = pd.read_csv(data_file_path)
+    df = pd.read_csv(data_file_path, sep=';', header=0, skiprows=[1])
 except FileNotFoundError:
     logger.error(f"Data file not found at: {data_file_path}")
     raise
@@ -47,3 +49,4 @@ logger.info("Saving data to catalog")
 data_processor.save_to_catalog(X_train, X_test)
 
 logger.info("Script 01.preprocess_data.py finished.")
+# COMMAND ----------
