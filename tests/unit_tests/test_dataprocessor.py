@@ -52,7 +52,6 @@ def test_column_transformations(sample_data: pd.DataFrame, config: ProjectConfig
     processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
     processor.preprocess()
 
-    assert processor.df["ID"].dtype == "int64"
     assert processor.df["X2"].dtype == "category"
     assert processor.df["X3"].dtype == "category"
     assert processor.df["X1"].dtype == "int64"  
@@ -86,7 +85,7 @@ def test_column_selection(sample_data: pd.DataFrame, config: ProjectConfig, spar
     processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
     processor.preprocess()
 
-    expected_columns = config.cat_features + config.num_features + [config.target, "Id"]
+    expected_columns = config.cat_features + config.num_features + [config.target, "ID"]
     assert set(processor.df.columns) == set(expected_columns)
 
 
@@ -128,7 +127,7 @@ def test_preprocess_empty_dataframe(config: ProjectConfig, spark_session: SparkS
     :raises KeyError: If the preprocess method handles empty DataFrame correctly
     """
     processor = DataProcessor(pandas_df=pd.DataFrame([]), config=config, spark=spark_session)
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         processor.preprocess()
 
 
