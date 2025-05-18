@@ -51,9 +51,10 @@ def test_column_transformations(sample_data: pd.DataFrame, config: ProjectConfig
     processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
     processor.preprocess()
 
-    assert "GarageYrBlt" not in processor.df.columns
     assert processor.df["Id"].dtype == "object"
-    assert processor.df["MasVnrType"].dtype == "category"
+    assert processor.df["X2"].dtype == "category"
+    assert processor.df["X3"].dtype == "category"
+    assert processor.df["X1"].dtype == "int64"  
 
 
 def test_missing_value_handling(sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession) -> None:
@@ -69,10 +70,7 @@ def test_missing_value_handling(sample_data: pd.DataFrame, config: ProjectConfig
     processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
     processor.preprocess()
 
-    assert processor.df["LotFrontage"].isna().sum() == 0
-    assert (processor.df["MasVnrType"] == "None").sum() > 0
-    assert (processor.df["MasVnrArea"] == 0).sum() > 0
-
+    assert processor.df["X1"].isna().sum() == 0
 
 def test_column_selection(sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession) -> None:
     """Test column selection in the DataProcessor.
