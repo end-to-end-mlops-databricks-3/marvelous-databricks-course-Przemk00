@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings
 
 class SparkConfig(BaseSettings):
     """Configuration class for application settings.
+
     This class loads settings from environment variables or a specified `.env` file
     and provides validation for the defined attributes.
     """
