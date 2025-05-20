@@ -1,0 +1,43 @@
+prd:
+  catalog_name: mlops_prd
+  schema_name: przemekg
+acc:
+  catalog_name: mlops_acc
+  schema_name: przemekg
+dev:
+  catalog_name: mlops_dev
+  schema_name: przemekg
+
+parameters:
+  learning_rate: 0.01
+  n_estimators: 1000
+  max_depth: 6
+
+num_features:
+  - X1  # LIMIT_BAL
+  - X5  # AGE
+  - X6  # PAY_0
+  - X7  # PAY_2
+  - X8  # PAY_3
+  - X9  # PAY_4
+  - X10 # PAY_5
+  - X11 # PAY_6
+  - X12 # BILL_AMT1
+  - X13 # BILL_AMT2
+  - X14 # BILL_AMT3
+  - X15 # BILL_AMT4
+  - X16 # BILL_AMT5
+  - X17 # BILL_AMT6
+  - X18 # PAY_AMT1
+  - X19 # PAY_AMT2
+  - X20 # PAY_AMT3
+  - X21 # PAY_AMT4
+  - X22 # PAY_AMT5
+  - X23 # PAY_AMT6
+
+cat_features:
+  - X2  # Sex
+  - X3  # EDUCATION
+  - X4  # MARRIAGE
+
+target: Y # default payment next month
