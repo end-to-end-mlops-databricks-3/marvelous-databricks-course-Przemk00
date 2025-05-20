@@ -9,6 +9,7 @@ from pyspark.sql import SparkSession
 from default_detection.config import ProjectConfig
 from default_detection.data_processor import DataProcessor
 
+
 def test_data_ingestion(sample_data: pd.DataFrame) -> None:
     """Test the data ingestion process by checking the shape of the sample data.
 
@@ -54,7 +55,7 @@ def test_column_transformations(sample_data: pd.DataFrame, config: ProjectConfig
 
     assert processor.df["X2"].dtype == "category"
     assert processor.df["X3"].dtype == "category"
-    assert processor.df["X1"].dtype == "int64"  
+    assert processor.df["X1"].dtype == "int64"
 
 
 def test_missing_value_handling(sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession) -> None:
@@ -71,6 +72,7 @@ def test_missing_value_handling(sample_data: pd.DataFrame, config: ProjectConfig
     processor.preprocess()
 
     assert processor.df["X1"].isna().sum() == 0
+
 
 def test_column_selection(sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession) -> None:
     """Test column selection in the DataProcessor.
