@@ -89,8 +89,8 @@ class PocessModeling:
         self.parameters = self.config.parameters  # LGBM parameters
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
-        # Create a specific experiment name for this baseline model
-        self.experiment_name = f"{self.config.schema_name}_Default_Detection_Baseline_Experiment"
+        # Create a specific experiment name for this model
+        self.experiment_name = f"{self.config.schema_name}_Default_Detection_Experiment"
         self.tags = tags.dict()
         self.code_paths = code_paths
         # Removed hotel-specific attributes: date_features, banned_clients_ids, banned_client_path
