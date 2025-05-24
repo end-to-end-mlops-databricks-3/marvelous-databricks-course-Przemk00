@@ -26,7 +26,7 @@ mlflow.set_registry_uri("databricks-uc")
 # COMMAND ----------
 
 try:
-    parser = argparse.ArgumentParser()
+    parser = GracefulArgumentParser()  # Use the custom parser
     parser.add_argument(
         "--root_path",
         action="store",
@@ -67,7 +67,8 @@ try:
         required=True,
     )
     args = parser.parse_args()
-except (argparse.ArgumentError, SystemExit):
+except argparse.ArgumentError as e:
+    logger.warning(f"Argument parsing failed: {str(e)}. Using default values.")
     args = argparse.Namespace(root_path=config_path, env="dev", git_sha="123", job_run_id="unique_id", branch="przemekg")
 
 root_path = args.root_path
