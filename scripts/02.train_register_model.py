@@ -16,6 +16,7 @@ sys.path.append(str(Path.cwd().parent / "src"))
 from default_detection.config import ProjectConfig, Tags
 from default_detection.models.modeling_pipeline import PocessModeling
 
+
 base_dir = os.path.abspath(str(Path.cwd().parent))
 config_path = os.path.join(base_dir, "project_config.yml")
 
@@ -26,7 +27,7 @@ mlflow.set_registry_uri("databricks-uc")
 # COMMAND ----------
 
 try:
-    parser = GracefulArgumentParser()  # Use the custom parser
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "--root_path",
         action="store",
