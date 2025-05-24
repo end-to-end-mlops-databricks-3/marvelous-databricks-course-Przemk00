@@ -89,7 +89,7 @@ class PocessModeling:
         self.parameters = self.config.parameters
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
-        self.experiment_name = f"{self.config.schema_name}_dd_experiment"
+        self.experiment_name = self.config.experiment_name
         self.tags = tags.dict()
         self.code_paths = code_paths
 
