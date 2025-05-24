@@ -140,7 +140,7 @@ def test_register_model(mock_custom_model: PocessModeling) -> None:
     # Updated alias to match the one set in modeling_pipeline.py
     # Ensure 'Baseline' alias exists and points to the latest version.
     assert "Baseline" in model.aliases
-    assert model.aliases["Baseline"] == model.latest_versions[-1].version
+    assert int(model.aliases["Baseline"]) == model.latest_versions[-1].version
 
 
 def test_retrieve_current_run_metadata(mock_custom_model: PocessModeling) -> None:

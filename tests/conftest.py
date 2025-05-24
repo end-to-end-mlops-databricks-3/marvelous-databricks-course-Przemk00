@@ -22,15 +22,15 @@ def expected_feature_names() -> list[str]:
     """Return a list of expected feature names for the default detection model."""
     return [
         # Categorical features (X2, X3, X4)
-        "cat__X2_1",
-        "cat__X2_2",
-        "cat__X3_1",
-        "cat__X3_2",
-        "cat__X3_3",
-        "cat__X3_5",  # Based on unique values in train_set.csv
-        "cat__X4_1",
-        "cat__X4_2",
-        "cat__X4_3",
+        "cat_ohe__X2_1",
+        "cat_ohe__X2_2",
+        "cat_ohe__X3_1",
+        "cat_ohe__X3_2",
+        "cat_ohe__X3_3",
+        "cat_ohe__X3_5",  # Based on unique values in train_set.csv
+        "cat_ohe__X4_1",
+        "cat_ohe__X4_2",
+        "cat_ohe__X4_3",
         # Numerical features (passthrough)
         "remainder__X1",
         "remainder__X5",
