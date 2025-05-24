@@ -19,10 +19,15 @@ from default_detection.models.modeling_pipeline import PocessModeling
 
 base_dir = os.path.abspath(str(Path.cwd().parent))
 config_path = os.path.join(base_dir, "project_config.yml")
+spark = SparkSession.builder.getOrCreate()
 
-# Configure tracking uri
 mlflow.set_tracking_uri("databricks")
 mlflow.set_registry_uri("databricks-uc")
+
+ # COMMAND ----------
+
+tags_dict = {"git_sha": "abcd12345", "branch": "week2", "job_run_id": ""}
+tags = Tags(**tags_dict)
 
 # COMMAND ----------
 
@@ -76,7 +81,6 @@ root_path = args.root_path
 config_path = f"{root_path}"
 
 config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)
-spark = SparkSession.builder.getOrCreate()
 dbutils = DBUtils(spark)
 tags_dict = {"git_sha": args.git_sha, "branch": args.branch, "job_run_id": args.job_run_id}
 tags = Tags(**tags_dict)
