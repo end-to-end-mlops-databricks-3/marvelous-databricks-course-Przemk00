@@ -16,18 +16,9 @@ sys.path.append(str(Path.cwd().parent / "src"))
 from default_detection.config import ProjectConfig, Tags
 from default_detection.models.modeling_pipeline import PocessModeling
 
-
-base_dir = os.path.abspath(str(Path.cwd().parent))
-config_path = os.path.join(base_dir, "project_config.yml")
+config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
 spark = SparkSession.builder.getOrCreate()
-
-mlflow.set_tracking_uri("databricks://dbr-pg")
-mlflow.set_registry_uri("databricks-uc")
-
- # COMMAND ----------
-
-tags_dict = {"git_sha": "abcd12345", "branch": "week2", "job_run_id": ""}
-tags = Tags(**tags_dict)
+tags = Tags(**{"git_sha": "abcd12345", "branch": "week2", "job_run_id": ""})
 
 # COMMAND ----------
 
@@ -36,7 +27,7 @@ try:
     parser.add_argument(
         "--root_path",
         action="store",
-        default=config_path,
+        default=config,
         type=str,
         required=True,
     )
@@ -75,7 +66,7 @@ try:
     args = parser.parse_args()
 except (argparse.ArgumentError, SystemExit) as e:
     logger.warning(f"Argument parsing failed: {str(e)}. Using default values.")
-    args = argparse.Namespace(root_path=config_path, env="dev", git_sha="123", job_run_id="unique_id", branch="przemekg")
+    args = argparse.Namespace(root_path=config, env="dev", git_sha="123", job_run_id="unique_id", branch="przemekg")
 
 # COMMAND ----------
 
