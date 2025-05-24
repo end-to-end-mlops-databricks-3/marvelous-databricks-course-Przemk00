@@ -40,7 +40,8 @@ test = [
     "pytest>=8.3.5",
     "pytest-cov >=6.1.0",
     "pydantic-settings>=2.8.1",
-    "marvelous@git+https://github.com/end-to-end-mlops-databricks-3/marvelous@0.1.0"
+    "marvelous@git+https://github.com/end-to-end-mlops-databricks-3/marvelous@0.1.0",
+    "setuptools"  # For pkg_resources, a dependency of hyperopt used in tests
 ]
 
 [build-system]

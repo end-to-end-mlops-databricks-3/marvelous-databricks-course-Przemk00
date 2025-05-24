@@ -1340,6 +1340,7 @@ test = [
     { name = "pyspark" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "setuptools" },
 ]
 
 [package.metadata]
@@ -1374,6 +1375,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=6.1.0" },
     { name = "scikit-learn", specifier = "==1.5.2" },
     { name = "scipy", specifier = "==1.14.1" },
+    { name = "setuptools", marker = "extra == 'test'" },
 ]
 provides-extras = ["dev", "test"]
 
