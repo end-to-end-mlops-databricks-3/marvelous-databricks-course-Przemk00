@@ -73,9 +73,11 @@ try:
         required=True,
     )
     args = parser.parse_args()
-except argparse.ArgumentError as e:
+except (argparse.ArgumentError, SystemExit) as e:
     logger.warning(f"Argument parsing failed: {str(e)}. Using default values.")
     args = argparse.Namespace(root_path=config_path, env="dev", git_sha="123", job_run_id="unique_id", branch="przemekg")
+
+# COMMAND ----------
 
 root_path = args.root_path
 config_path = f"{root_path}"
@@ -107,3 +109,4 @@ logger.info("Model training completed.")
 
 modeling_ppl.register_model()
 logger.info("Registered model")
+# COMMAND ----------

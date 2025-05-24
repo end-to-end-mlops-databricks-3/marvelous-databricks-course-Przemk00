@@ -13,6 +13,8 @@ parameters:
   n_estimators: 1000
   max_depth: 6
 
+hyperparameters_tuning: false
+
 num_features:
   - X1  # LIMIT_BAL
   - X5  # AGE
