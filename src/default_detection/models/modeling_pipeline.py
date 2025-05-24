@@ -85,15 +85,13 @@ class PocessModeling:
         # Extract settings from the config
         self.num_features = self.config.num_features
         self.cat_features = self.config.cat_features
-        self.target = self.config.target  # Should be 'Y' based on project_config.yml
-        self.parameters = self.config.parameters  # LGBM parameters
+        self.target = self.config.target
+        self.parameters = self.config.parameters
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
-        # Create a specific experiment name for this model
         self.experiment_name = f"{self.config.schema_name}_Default_Detection_Experiment"
         self.tags = tags.dict()
         self.code_paths = code_paths
-        # Removed hotel-specific attributes: date_features, banned_clients_ids, banned_client_path
 
     def load_data(self) -> None:
         """Load training and testing data from Delta tables using Spark.
