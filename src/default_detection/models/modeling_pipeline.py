@@ -201,7 +201,7 @@ class PocessModeling:
         # For simplicity, this example uses defaults or ranges from self.parameters if *_space/*_min/*_max keys exist
 
         trials = Trials()
-        with mlflow.start_run(run_name="hyperopt_search_baseline_model", nested=True, tags=self.tags):
+        with mlflow.start_run(run_name="hyperopt_search_model", nested=True, tags=self.tags):
             fmin(
                 fn=objective,
                 space=space,
@@ -256,7 +256,7 @@ class PocessModeling:
                 whl_name = os.path.basename(package)  # Use os.path.basename
                 additional_pip_deps.append(f"./code/{whl_name}")
 
-        with mlflow.start_run(tags=self.tags, run_name="log_baseline_model") as run:
+        with mlflow.start_run(tags=self.tags, run_name="log_model") as run:
             self.run_id = run.info.run_id
             y_pred_test = self.pipeline.predict(self.X_test)
 
@@ -339,7 +339,7 @@ class PocessModeling:
 
             mlflow.pyfunc.log_model(
                 python_model=ModelWrapper(self.pipeline),  # Pass the scikit-learn pipeline
-                artifact_path="pyfunc_default_detection_baseline_model",  # New artifact path
+                artifact_path="pyfunc_default_detection_model",  # New artifact path
                 # artifacts dictionary removed as no extra artifacts for this baseline
                 code_paths=self.code_paths,
                 conda_env=conda_env,
@@ -355,10 +355,10 @@ class PocessModeling:
             return
 
         logger.info("🔄 Registering the baseline model in UC...")
-        model_name = f"{self.catalog_name}.{self.schema_name}.default_detection_baseline_model"  # New model name
+        model_name = f"{self.catalog_name}.{self.schema_name}.default_detection_model"  # New model name
 
         registered_model = mlflow.register_model(
-            model_uri=f"runs:/{self.run_id}/pyfunc_default_detection_baseline_model",  # Use new artifact path
+            model_uri=f"runs:/{self.run_id}/pyfunc_default_detection_model",  # Use new artifact path
             name=model_name,
             tags=self.tags,
         )
@@ -413,7 +413,7 @@ class PocessModeling:
         :param alias: The model alias to load (e.g., "Baseline").
         :return: Predictions as a DataFrame (prediction, probability_default), or None if error.
         """
-        model_name = f"{self.catalog_name}.{self.schema_name}.default_detection_baseline_model"  # Use new model name
+        model_name = f"{self.catalog_name}.{self.schema_name}.default_detection_model"  # Use new model name
         logger.info(f"🔄 Loading baseline model '{model_name}@{alias}' from MLflow...")
 
         try:
