@@ -8,6 +8,8 @@ dev:
   catalog_name: mlops_dev
   schema_name: przemekg
 
+experiment_name: /Shared/przemekg-dd-experiment
+
 parameters:
   learning_rate: 0.01
   n_estimators: 1000
