@@ -17,8 +17,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src"
 import mlflow
 import numpy as np
 import pandas as pd
-from hotel_reservations.config import ProjectConfig, Tags
-from hotel_reservations.utils import serving_pred_function
 from hyperopt import STATUS_OK, Trials, fmin, hp, tpe
 from lightgbm import LGBMClassifier
 from loguru import logger
@@ -34,6 +32,9 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+
+from default_detection.config import ProjectConfig, Tags
+from default_detection.utils import serving_pred_function
 
 
 class DateFeatureEngineer(BaseEstimator, TransformerMixin):

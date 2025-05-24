@@ -1,3 +1,5 @@
+# Databricks notebook source
+
 """Modeling Pipeline module."""
 
 import argparse
@@ -20,6 +22,8 @@ config_path = os.path.join(base_dir, "project_config.yml")
 # Configure tracking uri
 mlflow.set_tracking_uri("databricks")
 mlflow.set_registry_uri("databricks-uc")
+
+# COMMAND ----------
 
 try:
     parser = argparse.ArgumentParser()
@@ -74,6 +78,8 @@ spark = SparkSession.builder.getOrCreate()
 dbutils = DBUtils(spark)
 tags_dict = {"git_sha": args.git_sha, "branch": args.branch, "job_run_id": args.job_run_id}
 tags = Tags(**tags_dict)
+
+# COMMAND ----------
 
 # Initialize model
 modeling_ppl = PocessModeling(
