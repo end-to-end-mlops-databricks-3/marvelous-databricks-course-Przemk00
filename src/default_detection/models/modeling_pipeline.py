@@ -70,7 +70,7 @@ class ModelWrapper(mlflow.pyfunc.PythonModel):
         )
 
 
-class DefaultDetectionBaselineModeling:  # Renamed from PocessModeling
+class PocessModeling:
     """Baseline model class for default detection.
 
     This class encapsulates the workflow of loading data, preparing features,
