@@ -16,71 +16,16 @@ sys.path.append(str(Path.cwd().parent / "src"))
 from default_detection.config import ProjectConfig, Tags
 from default_detection.models.modeling_pipeline import PocessModeling
 
-base_dir = os.path.abspath(str(Path.cwd().parent))
-config_path = os.path.join(base_dir, "project_config.yml")
 
- # Configure tracking uri
-mlflow.set_tracking_uri("databricks")
-mlflow.set_registry_uri("databricks-uc")
+config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
+spark = SparkSession.builder.getOrCreate()
 
 # COMMAND ----------
 
-try:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--root_path",
-        action="store",
-        default=config_path,
-        type=str,
-        required=True,
-    )
+config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
 
-    parser.add_argument(
-        "--env",
-        action="store",
-        default=None,
-        type=str,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--git_sha",
-        action="store",
-        default=None,
-        type=str,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--job_run_id",
-        action="store",
-        default=None,
-        type=str,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--branch",
-        action="store",
-        default=None,
-        type=str,
-        required=True,
-    )
-    args = parser.parse_args()
-except (argparse.ArgumentError, SystemExit) as e:
-    logger.warning(f"Argument parsing failed: {str(e)}. Using default values.")
-    args = argparse.Namespace(root_path=config_path, env="dev", git_sha="123", job_run_id="unique_id", branch="przemekg")
-
-# COMMAND ----------
-
-root_path = args.root_path
-config_path = f"{root_path}"
-
-config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)
-dbutils = DBUtils(spark)
-tags_dict = {"git_sha": args.git_sha, "branch": args.branch, "job_run_id": args.job_run_id}
-tags = Tags(**tags_dict)
-
+spark = SparkSession.builder.getOrCreate()
+tags = Tags(**{"git_sha": "abcd12345", "branch": "week2","job_run_id": "1234567890"})
 # COMMAND ----------
 
 # Initialize model
@@ -89,6 +34,7 @@ modeling_ppl = PocessModeling(
 )
 logger.info("Model initialized.")
 
+# COMMAND ----------
 # Load data and prepare features
 modeling_ppl.load_data()
 modeling_ppl.prepare_features()
