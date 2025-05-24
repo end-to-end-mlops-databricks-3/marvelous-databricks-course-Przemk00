@@ -16,6 +16,58 @@ sys.path.append(str(Path.cwd().parent / "src"))
 from default_detection.config import ProjectConfig, Tags
 from default_detection.models.modeling_pipeline import PocessModeling
 
+base_dir = os.path.abspath(str(Path.cwd().parent))
+config_path = os.path.join(base_dir, "project_config.yml")
+ 
+# Configure tracking uri
+mlflow.set_tracking_uri("databricks")
+mlflow.set_registry_uri("databricks-uc")
+
+try:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--root_path",
+        action="store",
+        default=None,
+        type=str,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--env",
+        action="store",
+        default=None,
+        type=str,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--git_sha",
+        action="store",
+        default=None,
+        type=str,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--job_run_id",
+        action="store",
+        default=None,
+        type=str,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--branch",
+        action="store",
+        default=None,
+        type=str,
+        required=True,
+    )
+    args = parser.parse_args()
+except (argparse.ArgumentError, SystemExit):
+    args = argparse.Namespace(root_path=config_path, env="dev", git_sha="123", job_run_id="1234567890", branch="przemekg")
+
 
 # COMMAND ----------
 
