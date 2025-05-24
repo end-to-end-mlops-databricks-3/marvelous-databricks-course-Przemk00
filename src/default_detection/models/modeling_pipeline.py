@@ -30,12 +30,6 @@ from sklearn.preprocessing import OneHotEncoder
 
 from default_detection.config import ProjectConfig, Tags
 
-# serving_pred_function is not used in this baseline version
-# from default_detection.utils import serving_pred_function
-
-
-# DateFeatureEngineer class removed as it's not relevant for default detection features
-
 
 class ModelWrapper(mlflow.pyfunc.PythonModel):
     """Wrapper class for the default detection model to be used with MLflow.
@@ -258,7 +252,7 @@ class PocessModeling:
         mlflow.set_experiment(self.experiment_name)
         logger.info(f"📦 Logging model to MLflow experiment: '{self.experiment_name}'")
 
-        additional_pip_deps = ["pyspark==3.5.0"]  # Adjust as needed
+        additional_pip_deps = ["pyspark==3.5.0"]
         if self.code_paths:
             for package in self.code_paths:
                 whl_name = os.path.basename(package)  # Use os.path.basename
