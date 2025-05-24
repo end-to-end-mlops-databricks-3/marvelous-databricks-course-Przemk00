@@ -20,7 +20,7 @@ base_dir = os.path.abspath(str(Path.cwd().parent))
 config_path = os.path.join(base_dir, "project_config.yml")
  
 # Configure tracking uri
-mlflow.set_tracking_uri("databricks")
+mlflow.set_tracking_uri("databricks://dbr-pg")
 mlflow.set_registry_uri("databricks-uc")
 
 try:
