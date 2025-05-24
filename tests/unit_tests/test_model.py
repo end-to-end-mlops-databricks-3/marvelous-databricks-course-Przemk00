@@ -12,7 +12,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
 from default_detection.config import ProjectConfig, Tags
-from default_detection.models.modeling_pipeline import DateFeatureEngineer, PocessModeling
+from default_detection.models.modeling_pipeline import PocessModeling
 
 mlflow.set_tracking_uri(TRACKING_URI)
 
@@ -46,113 +46,41 @@ def test_prepare_features(mock_custom_model: PocessModeling) -> None:
     assert isinstance(mock_custom_model.preprocessor, ColumnTransformer)
     assert isinstance(mock_custom_model.pipeline, Pipeline)
     assert isinstance(mock_custom_model.pipeline.steps, list)
-    assert isinstance(mock_custom_model.pipeline.steps[0][1], DateFeatureEngineer)
-    assert isinstance(mock_custom_model.pipeline.steps[1][1], ColumnTransformer)
-    assert isinstance(mock_custom_model.pipeline.steps[2][1], LGBMClassifier)
+    # DateFeatureEngineer is removed for the default detection model
+    assert isinstance(mock_custom_model.pipeline.steps[0][1], ColumnTransformer)  # preprocessor
+    assert isinstance(mock_custom_model.pipeline.steps[1][1], LGBMClassifier)  # classifier
 
 
-def test_train(mock_custom_model: PocessModeling) -> None:
+def test_train(mock_custom_model: PocessModeling, expected_feature_names: list[str]) -> None:
     """Test that train method configures pipeline with correct feature handling..
 
     Validates feature count matches configuration and feature names align with
     numerical/categorical features defined in model config.
     :param mock_custom_model: Mocked PocessModeling instance for testing
+    :param expected_feature_names: Fixture providing the expected feature names after preprocessing
     """
     mock_custom_model.load_data()
     mock_custom_model.prepare_features()
     mock_custom_model.train()
-    expected_feature_names = [
-        "cat__type_of_meal_plan_Meal Plan 1",
-        "cat__type_of_meal_plan_Meal Plan 2",
-        "cat__type_of_meal_plan_Meal Plan 3",
-        "cat__type_of_meal_plan_Not Selected",
-        "cat__required_car_parking_space_0",
-        "cat__required_car_parking_space_1",
-        "cat__room_type_reserved_Room_Type 1",
-        "cat__room_type_reserved_Room_Type 2",
-        "cat__room_type_reserved_Room_Type 3",
-        "cat__room_type_reserved_Room_Type 4",
-        "cat__room_type_reserved_Room_Type 5",
-        "cat__room_type_reserved_Room_Type 6",
-        "cat__room_type_reserved_Room_Type 7",
-        "cat__market_segment_type_Aviation",
-        "cat__market_segment_type_Complementary",
-        "cat__market_segment_type_Corporate",
-        "cat__market_segment_type_Offline",
-        "cat__market_segment_type_Online",
-        "cat__country_PL",
-        "cat__country_UK",
-        "remainder__no_of_adults",
-        "remainder__no_of_children",
-        "remainder__no_of_weekend_nights",
-        "remainder__no_of_week_nights",
-        "remainder__lead_time",
-        "remainder__repeated_guest",
-        "remainder__no_of_previous_cancellations",
-        "remainder__no_of_previous_bookings_not_canceled",
-        "remainder__avg_price_per_room",
-        "remainder__no_of_special_requests",
-        "remainder__month_sin",
-        "remainder__month_cos",
-        "remainder__is_first_quarter",
-        "remainder__is_second_quarter",
-        "remainder__is_third_quarter",
-        "remainder__is_fourth_quarter",
-    ]
+
     preprocessor = mock_custom_model.pipeline.named_steps["preprocessor"]
 
     assert len(list(preprocessor.get_feature_names_out())) == len(expected_feature_names)
     assert sorted(expected_feature_names) == sorted(preprocessor.get_feature_names_out())
 
 
-def test_log_model_with_PandasDataset(mock_custom_model: PocessModeling) -> None:
+def test_log_model_with_PandasDataset(mock_custom_model: PocessModeling, expected_feature_names: list[str]) -> None:
     """Test model logging with PandasDataset validation..
 
     Verifies that the model's pipeline captures correct feature dimensions and names,
     then checks proper dataset type handling during model logging.
     :param mock_custom_model: Mocked PocessModeling instance for testing
+    :param expected_feature_names: Fixture providing the expected feature names after preprocessing
     """
     mock_custom_model.load_data()
     mock_custom_model.prepare_features()
     mock_custom_model.train()
-    expected_feature_names = [
-        "cat__type_of_meal_plan_Meal Plan 1",
-        "cat__type_of_meal_plan_Meal Plan 2",
-        "cat__type_of_meal_plan_Meal Plan 3",
-        "cat__type_of_meal_plan_Not Selected",
-        "cat__required_car_parking_space_0",
-        "cat__required_car_parking_space_1",
-        "cat__room_type_reserved_Room_Type 1",
-        "cat__room_type_reserved_Room_Type 2",
-        "cat__room_type_reserved_Room_Type 3",
-        "cat__room_type_reserved_Room_Type 4",
-        "cat__room_type_reserved_Room_Type 5",
-        "cat__room_type_reserved_Room_Type 6",
-        "cat__room_type_reserved_Room_Type 7",
-        "cat__market_segment_type_Aviation",
-        "cat__market_segment_type_Complementary",
-        "cat__market_segment_type_Corporate",
-        "cat__market_segment_type_Offline",
-        "cat__market_segment_type_Online",
-        "cat__country_PL",
-        "cat__country_UK",
-        "remainder__no_of_adults",
-        "remainder__no_of_children",
-        "remainder__no_of_weekend_nights",
-        "remainder__no_of_week_nights",
-        "remainder__lead_time",
-        "remainder__repeated_guest",
-        "remainder__no_of_previous_cancellations",
-        "remainder__no_of_previous_bookings_not_canceled",
-        "remainder__avg_price_per_room",
-        "remainder__no_of_special_requests",
-        "remainder__month_sin",
-        "remainder__month_cos",
-        "remainder__is_first_quarter",
-        "remainder__is_second_quarter",
-        "remainder__is_third_quarter",
-        "remainder__is_fourth_quarter",
-    ]
+
     preprocessor = mock_custom_model.pipeline.named_steps["preprocessor"]
 
     assert len(list(preprocessor.get_feature_names_out())) == len(expected_feature_names)
@@ -160,7 +88,6 @@ def test_log_model_with_PandasDataset(mock_custom_model: PocessModeling) -> None
 
     mock_custom_model.log_model(dataset_type="PandasDataset")
 
-    # Split the following part
     client = MlflowClient()
     experiment = mlflow.get_experiment_by_name(mock_custom_model.experiment_name)
     assert experiment.name == mock_custom_model.experiment_name
@@ -172,10 +99,12 @@ def test_log_model_with_PandasDataset(mock_custom_model: PocessModeling) -> None
     assert len(runs) == 1
     latest_run = runs[0]
 
-    model_uri = f"runs:/{latest_run.info.run_id}/model"
+    model_uri = f"runs:/{latest_run.info.run_id}/pyfunc_default_detection_model"
     logger.info(f"{model_uri= }")
 
     assert model_uri
+    loaded_model = mlflow.pyfunc.load_model(model_uri)
+    assert loaded_model is not None
 
 
 def test_register_model(mock_custom_model: PocessModeling) -> None:
@@ -194,7 +123,7 @@ def test_register_model(mock_custom_model: PocessModeling) -> None:
     mock_custom_model.register_model()
 
     client = MlflowClient()
-    model_name = f"{mock_custom_model.catalog_name}.{mock_custom_model.schema_name}.dd_model"
+    model_name = f"{mock_custom_model.catalog_name}.{mock_custom_model.schema_name}.default_detection_model"
 
     try:
         model = client.get_registered_model(model_name)
@@ -208,8 +137,10 @@ def test_register_model(mock_custom_model: PocessModeling) -> None:
             raise e
 
     assert isinstance(model, RegisteredModel)
-    alias, version = model.aliases.popitem()
-    assert alias == "latest-model"
+    # Updated alias to match the one set in modeling_pipeline.py
+    # Ensure 'Baseline' alias exists and points to the latest version.
+    assert "Baseline" in model.aliases
+    assert model.aliases["Baseline"] == model.latest_versions[-1].version
 
 
 def test_retrieve_current_run_metadata(mock_custom_model: PocessModeling) -> None:
@@ -249,81 +180,124 @@ def test_load_latest_model_and_predict(mock_custom_model: PocessModeling) -> Non
     mock_custom_model.register_model()
 
     columns = [
-        "type_of_meal_plan",
-        "required_car_parking_space",
-        "room_type_reserved",
-        "market_segment_type",
-        "country",
-        "no_of_adults",
-        "no_of_children",
-        "no_of_weekend_nights",
-        "no_of_week_nights",
-        "lead_time",
-        "repeated_guest",
-        "no_of_previous_cancellations",
-        "no_of_previous_bookings_not_canceled",
-        "avg_price_per_room",
-        "no_of_special_requests",
-        "arrival_month",
-        "Booking_ID",
-        "Client_ID",
+        "X1",
+        "X2",
+        "X3",
+        "X4",
+        "X5",
+        "X6",
+        "X7",
+        "X8",
+        "X9",
+        "X10",
+        "X11",
+        "X12",
+        "X13",
+        "X14",
+        "X15",
+        "X16",
+        "X17",
+        "X18",
+        "X19",
+        "X20",
+        "X21",
+        "X22",
+        "X23",
     ]
     data = [
-        ["Meal Plan 1", 0, "Room_Type 1", "Online", "PL", 2, 1, 2, 1, 26, 0, 0, 0, 161, 0, 10, "INN25630", "ABCDE"],
+        # Sample row 1 (corresponds to X1-X23)
         [
-            "Meal Plan 1",
+            50000,
+            "1",
+            "2",
+            "1",
+            30,
             0,
-            "Room_Type 1",
-            "Online",
-            "PL",
-            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            50000.0,
+            50000.0,
+            50000.0,
+            50000.0,
+            50000.0,
+            50000.0,
+            2000.0,
+            2000.0,
+            2000.0,
+            2000.0,
+            2000.0,
+            2000.0,
+        ],
+        # Sample row 2
+        [
+            20000,
+            "2",
+            "1",
+            "2",
+            25,
             1,
             2,
-            1,
-            26,
             0,
             0,
             0,
-            161,
             0,
-            10,
-            "INN25630",
-            "client_banned",
+            1000.0,
+            800.0,
+            1200.0,
+            1000.0,
+            0.0,
+            0.0,
+            500.0,
+            300.0,
+            700.0,
+            0.0,
+            0.0,
+            0.0,
         ],
     ]
 
     input_data = pd.DataFrame(data, columns=columns)
 
     cols_types = {
-        "required_car_parking_space": "int32",
-        "no_of_adults": "int32",
-        "no_of_children": "int32",
-        "no_of_weekend_nights": "int32",
-        "no_of_week_nights": "int32",
-        "lead_time": "int32",
-        "repeated_guest": "int32",
-        "no_of_previous_cancellations": "int32",
-        "no_of_previous_bookings_not_canceled": "int32",
-        "avg_price_per_room": "float32",
-        "no_of_special_requests": "int32",
-        "arrival_month": "int32",
+        "X1": "int32",
+        "X5": "int32",
+        "X6": "int32",
+        "X7": "int32",
+        "X8": "int32",
+        "X9": "int32",
+        "X10": "int32",
+        "X11": "int32",
+        "X12": "float32",
+        "X13": "float32",
+        "X14": "float32",
+        "X15": "float32",
+        "X16": "float32",
+        "X17": "float32",
+        "X18": "float32",
+        "X19": "float32",
+        "X20": "float32",
+        "X21": "float32",
+        "X22": "float32",
+        "X23": "float32",
+        "X2": "str",
+        "X3": "str",
+        "X4": "str",
     }
 
     input_data = input_data.astype(cols_types)
 
-    for i in range(len(input_data)):
-        row_df = input_data.iloc[[i]]
-        predictions = mock_custom_model.load_latest_model_and_predict(input_data=row_df)
+    predictions = mock_custom_model.load_latest_model_and_predict(input_data=input_data)
 
-        client_id = row_df["Client_ID"].iloc[0]
-        comment = predictions["Comment"].iloc[0]
-        proba = predictions["Proba"].iloc[0]
-        if client_id == "client_banned":
-            assert comment == "Banned"
-            assert proba == 1
-        else:
-            assert comment == "None"
-        assert len(predictions.columns) == 3
-        assert "Client_ID" in predictions.columns
-        assert "Proba" in predictions.columns
-        assert "Comment" in predictions.columns
+    assert predictions is not None
+    assert isinstance(predictions, pd.DataFrame)
+    assert len(predictions.columns) == 2
+    assert "prediction" in predictions.columns
+    assert "probability_default" in predictions.columns
+    assert len(predictions) == len(input_data)
+    assert (
+        predictions["prediction"].dtype == "int64" or predictions["prediction"].dtype == "int32"
+    )  # LGBM output type for classification
+    assert predictions["probability_default"].dtype == "float64"  # Probabilities are float

@@ -16,8 +16,6 @@ from default_detection import PROJECT_DIR
 from default_detection.config import ProjectConfig, Tags
 from default_detection.models.modeling_pipeline import PocessModeling
 
-whl_file_name = None  # Global variable to store the .whl file name
-
 
 @pytest.fixture(scope="session")
 def tags() -> Tags:
@@ -44,7 +42,7 @@ def create_mlruns_directory() -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def build_whl_file() -> None:
+def build_whl_file() -> str:
     """Session-scoped fixture to build a .whl file for the project.
 
     This fixture ensures that the project's distribution directory is cleaned,
@@ -52,25 +50,23 @@ def build_whl_file() -> None:
     The fixture runs automatically once per test session.
     :raises RuntimeError: If an unexpected error occurs during the build process.
     :raises FileNotFoundError: If the dist directory or .whl file is not found.
+    :return: The name of the built .whl file.
     """
-    global whl_file_name
+    # global whl_file_name # Removed global
     dist_directory_path = PROJECT_DIR / "dist"
     original_directory = Path.cwd()  # Save the current working directory
+    built_whl_file_name = None
 
     try:
-        # Clean up the dist directory if it exists
         if dist_directory_path.exists():
             shutil.rmtree(dist_directory_path)
 
-        # Change to project directory and execute 'uv build'
         os.chdir(PROJECT_DIR)
         subprocess.run(["uv", "build"], check=True, text=True, capture_output=True)
 
-        # Ensure the dist directory exists after the build
         if not dist_directory_path.exists():
             raise FileNotFoundError(f"Dist directory does not exist: {dist_directory_path}")
 
-        # Get list of files in the dist directory
         files = [entry.name for entry in dist_directory_path.iterdir() if entry.is_file()]
 
         # Find the first .whl file
@@ -78,8 +74,7 @@ def build_whl_file() -> None:
         if not whl_file:
             raise FileNotFoundError("No .whl file found in the dist directory.")
 
-        # Set the global variable with the .whl file name
-        whl_file_name = whl_file
+        built_whl_file_name = whl_file
 
     except Exception as err:
         raise RuntimeError(f"Unexpected error occurred: {err}") from err
@@ -88,35 +83,34 @@ def build_whl_file() -> None:
         # Restore the original working directory
         os.chdir(original_directory)
 
+    if built_whl_file_name is None:
+        raise FileNotFoundError("Failed to identify .whl file name after build.")
 
-@pytest.fixture
-def banned_client_list_path(tmp_path: Path) -> str:
-    """Fixture to create a temporary CSV file with banned client IDs."""
-    df = pd.DataFrame({"banned_clients_ids": ["client_banned", "client_banned2"]})
-    file_path = tmp_path / "banned_client_list.csv"
-    df.to_csv(file_path, index=False, sep=";")
-    return str(file_path)
+    return built_whl_file_name
 
 
 @pytest.fixture(scope="function")
 def mock_custom_model(
-    config: ProjectConfig, tags: Tags, spark_session: SparkSession, banned_client_list_path: str
-) -> PocessModeling:
+    config: ProjectConfig, tags: Tags, spark_session: SparkSession, build_whl_file: str
+) -> PocessModeling:  # Removed banned_client_list_path from parameters
     """Fixture that provides a CustomModel instance with mocked Spark interactions..
 
     Initializes the model with test data and mocks Spark DataFrame conversions to pandas.
     :param config: Project configuration parameters
     :param tags: Tagging metadata for model tracking
     :param spark_session: Spark session instance for testing environment
+    # :param banned_client_list_path: Path to the banned client list CSV. # Removed
+    :param build_whl_file: The name of the built .whl file from the build_whl_file fixture.
     :return: Configured PocessModeling instance with mocked Spark interactions
     """
+    whl_file_name_from_fixture = build_whl_file  # Use the value from the fixture
     instance = PocessModeling(
         config=config,
         tags=tags,
         spark=spark_session,
-        code_paths=[f"{PROJECT_DIR.as_posix()}/dist/{whl_file_name}"],
+        code_paths=[f"{PROJECT_DIR.as_posix()}/dist/{whl_file_name_from_fixture}"],
     )
-    instance.banned_client_path = banned_client_list_path
+    # instance.banned_client_path = banned_client_list_path # Removed usage
 
     train_data = pd.read_csv((CATALOG_DIR / "train_set.csv").as_posix())
     # Important Note: Replace NaN with None in Pandas
