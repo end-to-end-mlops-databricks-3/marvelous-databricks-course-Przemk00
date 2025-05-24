@@ -17,9 +17,6 @@ from default_detection.config import ProjectConfig, Tags
 from default_detection.models.modeling_pipeline import PocessModeling
 
 
-config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
-spark = SparkSession.builder.getOrCreate()
-
 # COMMAND ----------
 
 config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
