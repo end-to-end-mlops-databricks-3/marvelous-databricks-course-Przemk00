@@ -17,22 +17,14 @@ from sklearn.preprocessing import OneHotEncoder
 from default_detection.config import ProjectConfig, Tags
 
 
-class FeatureLookupDDModel:  # Renamed from DefaultDetectionFeatureLookupModel
-    """A class to manage FeatureLookupModel for default detection."""
+class FeatureLookUpModel:  # Renamed from FeatureLookupDDModel
+    """A class to manage FeatureLookUpModel for default detection."""
 
     def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession) -> None:
         """Initialize the model with project configuration."""
         self.config = config
         self.spark = spark
-        # Explicitly use the 'dbr-pg' profile, consistent with MLflow setup in the script
-        # Ideally, this profile name would come from config or be passed to __init__
-        _profile_name = "dbr-pg"
-        _profile_name = "dbr-pg"
-        logger.info(f"Initializing WorkspaceClient with profile: '{_profile_name}'")
-        # Initialize WorkspaceClient first with the explicit profile
-        self.workspace = WorkspaceClient(profile=_profile_name)
-        logger.info("Initializing FeatureEngineeringClient")
-        self.fe = feature_engineering.FeatureEngineeringClient()
+
         # WorkspaceClient and FeatureEngineeringClient will use default Databricks authentication
         # This is suitable for notebook environments where auth context is typically inherited.
         logger.info("Initializing WorkspaceClient and FeatureEngineeringClient with default authentication.")
@@ -49,17 +41,16 @@ class FeatureLookupDDModel:  # Renamed from DefaultDetectionFeatureLookupModel
 
         # Define table names
         self.feature_table_name = (
-            f"{self.catalog_name}.{self.schema_name}.feature_lookup_dd_features"  # Updated table name
+            f"{self.catalog_name}.{self.schema_name}.feature_lookup_features"  # Simplified table name
         )
-        # self.function_name = f"{self.catalog_name}.{self.schema_name}.calculate_some_feature" # Example if needed
 
         # MLflow configuration
-        self.experiment_name = self.config.experiment_name_feature_lookup  # Using new config field
+        self.experiment_name = self.config.experiment_name_feature_lookup
         self.tags = tags.dict()
         self.run_id = None  # Initialize run_id
 
     def create_feature_table(self) -> None:
-        """Create or update the feature_lookup_dd_features table and populate it.
+        """Create or update the feature_lookup_features table and populate it.
 
         This table stores features related to customer defaults for feature lookup.
         Assumes an 'Id' column exists in source tables for lookup.
@@ -80,8 +71,8 @@ class FeatureLookupDDModel:  # Renamed from DefaultDetectionFeatureLookupModel
         (Id STRING NOT NULL{all_feature_cols_sql});
         """)
         self.spark.sql(
-            f"ALTER TABLE {self.feature_table_name} ADD CONSTRAINT feature_lookup_dd_pk PRIMARY KEY(Id);"
-        )  # Updated constraint name
+            f"ALTER TABLE {self.feature_table_name} ADD CONSTRAINT feature_lookup_pk PRIMARY KEY(Id);"  # Simplified constraint name
+        )
         self.spark.sql(f"ALTER TABLE {self.feature_table_name} SET TBLPROPERTIES (delta.enableChangeDataFeed = true);")
 
         feature_columns_to_select = ["Id"] + self.num_features + self.cat_features
@@ -174,7 +165,7 @@ class FeatureLookupDDModel:  # Renamed from DefaultDetectionFeatureLookupModel
             logger.info(f"📊 ROC AUC: {roc_auc}")
             logger.info(f"📊 F1 Score: {f1}")
 
-            mlflow.log_param("model_type", "LGBMClassifier_FeatureLookupDDModel")  # Updated model_type
+            mlflow.log_param("model_type", "LGBMClassifier_FeatureLookUpModel")  # Updated model_type
             mlflow.log_params(self.parameters)
             mlflow.log_metric("accuracy", acc)
             mlflow.log_metric("roc_auc", roc_auc)
@@ -185,24 +176,24 @@ class FeatureLookupDDModel:  # Renamed from DefaultDetectionFeatureLookupModel
             self.fe.log_model(
                 model=pipeline,
                 flavor=mlflow.sklearn,
-                artifact_path="lgbm-pipeline-feature-lookup-dd",  # Updated artifact path
+                artifact_path="lgbm-pipeline-feature-lookup",  # Updated artifact path
                 training_set=self.training_set,
                 signature=signature,
             )
-        logger.info(f"✅ Training complete for FeatureLookupDDModel. Run ID: {self.run_id}")
+        logger.info(f"✅ Training complete for FeatureLookUpModel. Run ID: {self.run_id}")
 
     def register_model(self) -> str:
         """Register the trained model to MLflow registry.
 
-        Registers the model and sets alias to 'latest-model'.
+        Registers the model and sets alias.
         """
         if not self.run_id:
             logger.error("❌ Run ID not set. Train the model first.")
             raise ValueError("Run ID is not set. Please train the model before registering.")
 
-        model_name = f"{self.catalog_name}.{self.schema_name}.feature_lookup_dd_model"  # Updated model name
+        model_name = f"{self.catalog_name}.{self.schema_name}.feature_lookup_model"  # Updated model name
         registered_model = mlflow.register_model(
-            model_uri=f"runs:/{self.run_id}/lgbm-pipeline-feature-lookup-dd",  # Updated artifact path
+            model_uri=f"runs:/{self.run_id}/lgbm-pipeline-feature-lookup",  # Updated artifact path
             name=model_name,
             tags=self.tags,
         )
@@ -210,22 +201,23 @@ class FeatureLookupDDModel:  # Renamed from DefaultDetectionFeatureLookupModel
         latest_version = registered_model.version
 
         client = MlflowClient()
+        alias_name = "FeatureLookUpLatest"  # Updated alias
         client.set_registered_model_alias(
             name=model_name,
-            alias="FeatureLookupDDLatest",  # Updated alias
+            alias=alias_name,
             version=latest_version,
         )
-        logger.info(f"✅ Model registered: {model_name} version {latest_version} with alias 'FeatureLookupDDLatest'.")
+        logger.info(f"✅ Model registered: {model_name} version {latest_version} with alias '{alias_name}'.")
         return latest_version
 
     def load_latest_model_and_predict(self, X: DataFrame) -> DataFrame:
         """Load the trained model from MLflow using Feature Engineering Client and make predictions.
 
-        Loads the model with the alias 'FeatureLookupDDLatest' and scores the batch.
+        Loads the model with the alias 'FeatureLookUpLatest' and scores the batch.
         :param X: DataFrame containing the input features (including the lookup key 'Id').
         :return: DataFrame containing the predictions.
         """
-        model_uri = f"models:/{self.catalog_name}.{self.schema_name}.feature_lookup_dd_model@FeatureLookupDDLatest"  # Updated model name and alias
+        model_uri = f"models:/{self.catalog_name}.{self.schema_name}.feature_lookup_model@FeatureLookUpLatest"  # Updated model name and alias
 
         predictions = self.fe.score_batch(model_uri=model_uri, df=X)
         logger.info(f"✅ Predictions made using model: {model_uri}")
