@@ -78,24 +78,24 @@ tags = Tags(**{"git_sha": "abcd12345", "branch": "week2","job_run_id": "12345678
 # COMMAND ----------
 
 # Initialize model
-modeling_ppl = BaseDDModel( # Renamed class
-    config=config, tags=tags, spark=spark, code_paths=["../src/default_detection/models/base_dd_model.py"] # Updated path
+custom_model = BaseDDModel(
+    config=config, tags=tags, spark=spark, code_paths=["../dist/default_detection-0.0.1-py3-none-any.whl"]
 )
 logger.info("Model initialized.")
 
 # COMMAND ----------
 # Load data and prepare features
-modeling_ppl.load_data()
-modeling_ppl.prepare_features()
+custom_model.load_data()
+custom_model.prepare_features()
 logger.info("Loaded data, prepared features.")
 
 # Train + log the model (runs everything including MLflow logging)
 if config.hyperparameters_tuning:
-    modeling_ppl.tune_hyperparameters()
-modeling_ppl.train()
-modeling_ppl.log_model()
+    custom_model.tune_hyperparameters()
+custom_model.train()
+custom_model.log_model()
 logger.info("Model training completed.")
 
-modeling_ppl.register_model()
+custom_model.register_model()
 logger.info("Registered model")
 # COMMAND ----------
