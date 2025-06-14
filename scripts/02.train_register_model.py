@@ -14,7 +14,7 @@ from pyspark.sql import SparkSession
 
 sys.path.append(str(Path.cwd().parent / "src"))
 from default_detection.config import ProjectConfig, Tags
-from default_detection.models.modeling_pipeline import PocessModeling
+from default_detection.models.base_dd_model import BaseDDModel
 
 base_dir = os.path.abspath(str(Path.cwd().parent))
 config_path = os.path.join(base_dir, "project_config.yml")
@@ -71,15 +71,15 @@ except (argparse.ArgumentError, SystemExit):
 
 # COMMAND ----------
 
-config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
+config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev") # Ensure this path is correct for your execution context
 
 spark = SparkSession.builder.getOrCreate()
 tags = Tags(**{"git_sha": "abcd12345", "branch": "week2","job_run_id": "1234567890"})
 # COMMAND ----------
 
 # Initialize model
-modeling_ppl = PocessModeling(
-    config=config, tags=tags, spark=spark, code_paths=["../src/default_detection/models/modeling_pipeline.py"]
+modeling_ppl = BaseDDModel( # Renamed class
+    config=config, tags=tags, spark=spark, code_paths=["../src/default_detection/models/base_dd_model.py"] # Updated path
 )
 logger.info("Model initialized.")
 
