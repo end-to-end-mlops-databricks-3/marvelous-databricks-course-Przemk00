@@ -24,7 +24,14 @@ class FeatureLookupDDModel:  # Renamed from DefaultDetectionFeatureLookupModel
         """Initialize the model with project configuration."""
         self.config = config
         self.spark = spark
-        self.workspace = WorkspaceClient()
+        # Explicitly use the 'dbr-pg' profile, consistent with MLflow setup in the script
+        # Ideally, this profile name would come from config or be passed to __init__
+        _profile_name = "dbr-pg"
+        _profile_name = "dbr-pg"
+        logger.info(f"Initializing WorkspaceClient with profile: '{_profile_name}'")
+        # Initialize WorkspaceClient first with the explicit profile
+        self.workspace = WorkspaceClient(profile=_profile_name)
+        logger.info("Initializing FeatureEngineeringClient")
         self.fe = feature_engineering.FeatureEngineeringClient()
 
         # Extract settings from the config

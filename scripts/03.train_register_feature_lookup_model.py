@@ -88,11 +88,27 @@ tags = Tags(**{"git_sha": args.git_sha, "branch": args.branch, "job_run_id": arg
 
 # Initialize FeatureLookupDDModel
 logger.info("Initializing FeatureLookupDDModel...")
+
+# Explicitly set MLFLOW_TRACKING_URI environment variable
+# to ensure FeatureEngineeringClient picks it up.
+# This should ideally match the profile used by mlflow.set_tracking_uri
+# For databricks profile, the URI is 'databricks' or 'databricks://<profile_name>'
+# We are using "databricks://dbr-pg" which implies the profile.
+# The SDK might also need DATABRICKS_CONFIG_PROFILE="dbr-pg" if it doesn't infer from the URI.
+# Let's ensure MLFLOW_TRACKING_URI is set to what MLflow expects for a profile.
+# When using a profile, MLflow itself often just needs 'databricks' and DATABRICKS_CONFIG_PROFILE.
+# However, since we set mlflow.set_tracking_uri("databricks://dbr-pg"),
+# let's try setting MLFLOW_TRACKING_URI to "databricks" and ensure DATABRICKS_CONFIG_PROFILE is also set.
+
+logger.info("Setting MLFLOW_TRACKING_URI and DATABRICKS_CONFIG_PROFILE environment variables.")
+os.environ["MLFLOW_TRACKING_URI"] = "databricks" # Use 'databricks' for profile-based auth
+os.environ["DATABRICKS_CONFIG_PROFILE"] = "dbr-pg" # Specify the profile
+
 feature_lookup_model = FeatureLookupDDModel(
-    config=config, 
-    tags=tags, 
+    config=config,
+    tags=tags,
     spark=spark
-    # code_paths are handled by fe.log_model for feature store models if needed, 
+    # code_paths are handled by fe.log_model for feature store models if needed,
     # or by the environment if running as part of a packaged application.
     # For this script, the model's own code is directly available via sys.path.
     # If the model logged by fe.log_model needs to bundle this script's dependencies,
