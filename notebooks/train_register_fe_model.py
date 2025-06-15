@@ -1,12 +1,15 @@
 # Databricks notebook source
 
-# COMMAND ----------
 # MAGIC %md
 # MAGIC # Feature Lookup Model Training and Registration Pipeline
 
 # COMMAND ----------
 # MAGIC %md
 # MAGIC ## Setup and Imports
+
+# COMMAND ----------
+# COMMAND ----------
+%pip install ../dist/default_detection-0.0.1-py3-none-any.whl
 
 # COMMAND ----------
 import os
@@ -161,11 +164,10 @@ try:
     sample_test_df_for_prediction = (
         spark.table(f"{config.catalog_name}.{config.schema_name}.test_set")
         .drop(*features_to_drop_for_prediction)
+        .withColumnRenamed("ID", "Id") # Rename ID to Id for feature lookup
         .limit(10) # Using a small sample for demonstration
     )
     
-    # Note: Ensure 'Id' column (or the correct lookup key) is present in sample_test_df_for_prediction
-    # if it's required by the feature lookups and not part of features_to_drop_for_prediction.
     if "Id" not in sample_test_df_for_prediction.columns:
         logger.warning("Prediction sample data does not contain 'Id' column. This might be needed for feature lookup.")
 
