@@ -1,7 +1,7 @@
 # Databricks notebook source
 
 # MAGIC %md
-# MAGIC # Feature Lookup Model Training and Registration Pipeline
+# MAGIC # Default Detection Model Training and Registration Pipeline (No Online Feature Store Lookups)
 
 # COMMAND ----------
 # MAGIC %md
@@ -9,12 +9,13 @@
 
 # COMMAND ----------
 # COMMAND ----------
-%pip install ../dist/default_detection-0.0.1-py3-none-any.whl
+# MAGIC %pip install ../dist/default_detection-0.0.1-py3-none-any.whl --upgrade
 
 # COMMAND ----------
 import os
 import sys
 from pathlib import Path
+import pandas as pd
 
 import mlflow
 from loguru import logger
@@ -24,7 +25,7 @@ from pyspark.sql import SparkSession
 sys.path.append(str(Path.cwd().parent / "src"))
 
 from default_detection.config import ProjectConfig, Tags
-from default_detection.models.feature_lookup_model import FeatureLookUpModel
+from default_detection.models.feature_lookup_model import DefaultDetectionModel
 
 # COMMAND ----------
 # MAGIC %md
@@ -37,9 +38,9 @@ mlflow.set_registry_uri("databricks-uc")
 
 # Notebook parameters
 ENV = "dev"
-GIT_SHA = "notebook_run_sha"
-JOB_RUN_ID = "notebook_job_run"
-BRANCH = "notebook_branch"
+GIT_SHA = "notebook_run_sha_no_fs"
+JOB_RUN_ID = "notebook_job_run_no_fs"
+BRANCH = "notebook_branch_no_fs"
 
 # Path to the project configuration file
 config_file_path = "../project_config.yml"
@@ -70,42 +71,30 @@ logger.info(f"Tags for MLflow run: {tags.dict()}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## Initialize FeatureLookUpModel
+# MAGIC ## Initialize DefaultDetectionModel
 
 # COMMAND ----------
-logger.info("Initializing FeatureLookUpModel...")
+logger.info("Initializing DefaultDetectionModel...")
 try:
-    feature_lookup_model = FeatureLookUpModel(
+    model_instance = DefaultDetectionModel(
         config=config,
         tags=tags,
         spark=spark
     )
-    logger.info("FeatureLookUpModel initialized successfully.")
+    logger.info("DefaultDetectionModel initialized successfully.")
 except Exception as e:
-    logger.error(f"Error initializing FeatureLookUpModel: {e}")
-    raise
-
-# COMMAND ----------
-# MAGIC %md
-# MAGIC ## Create Feature Table
-
-# COMMAND ----------
-logger.info("Creating feature table...")
-try:
-    feature_lookup_model.create_feature_table()
-    logger.info("Feature table creation process completed.")
-except Exception as e:
-    logger.error(f"Error creating feature table: {e}")
+    logger.error(f"Error initializing DefaultDetectionModel: {e}")
     raise
 
 # COMMAND ----------
 # MAGIC %md
 # MAGIC ## Load Data
+# MAGIC The `load_data` method in `DefaultDetectionModel` loads all features directly.
 
 # COMMAND ----------
-logger.info("Loading data for FeatureLookUpModel...")
+logger.info("Loading data for DefaultDetectionModel...")
 try:
-    feature_lookup_model.load_data()
+    model_instance.load_data()
     logger.info("Data loading completed.")
 except Exception as e:
     logger.error(f"Error loading data: {e}")
@@ -118,7 +107,7 @@ except Exception as e:
 # COMMAND ----------
 logger.info("Performing feature engineering...")
 try:
-    feature_lookup_model.feature_engineering()
+    model_instance.feature_engineering()
     logger.info("Feature engineering completed.")
 except Exception as e:
     logger.error(f"Error during feature engineering: {e}")
@@ -129,9 +118,9 @@ except Exception as e:
 # MAGIC ## Train Model
 
 # COMMAND ----------
-logger.info("Starting model training for FeatureLookUpModel...")
+logger.info("Starting model training for DefaultDetectionModel...")
 try:
-    feature_lookup_model.train() # This will use experiment_name_feature_lookup from config
+    model_instance.train() 
     logger.info("Model training completed.")
 except Exception as e:
     logger.error(f"Error during model training: {e}")
@@ -142,10 +131,10 @@ except Exception as e:
 # MAGIC ## Register Model
 
 # COMMAND ----------
-logger.info("Registering FeatureLookUpModel...")
+logger.info("Registering DefaultDetectionModel...")
 try:
-    registered_version = feature_lookup_model.register_model()
-    logger.info(f"FeatureLookUpModel registration completed. Version: {registered_version}")
+    registered_version = model_instance.register_model()
+    logger.info(f"DefaultDetectionModel registration completed. Version: {registered_version}")
 except Exception as e:
     logger.error(f"Error during model registration: {e}")
     raise
@@ -158,34 +147,44 @@ except Exception as e:
 # COMMAND ----------
 logger.info("Loading sample data for prediction...")
 try:
-    # Columns to drop are those that will be looked up by the feature store, plus the target.
-    features_to_drop_for_prediction = config.num_features + config.cat_features + [config.target]
-    
-    sample_test_df_for_prediction = (
+    sample_spark_df = (
         spark.table(f"{config.catalog_name}.{config.schema_name}.test_set")
-        .drop(*features_to_drop_for_prediction)
-        .withColumnRenamed("ID", "Id") # Rename ID to Id for feature lookup
-        .limit(10) # Using a small sample for demonstration
+        .limit(10)
     )
-    
-    if "Id" not in sample_test_df_for_prediction.columns:
-        logger.warning("Prediction sample data does not contain 'Id' column. This might be needed for feature lookup.")
+    sample_pandas_df = sample_spark_df.toPandas()
 
-    logger.info("Sample data for prediction:")
-    sample_test_df_for_prediction.show()
+    # Basic cleaning for the sample data
+    for col in config.num_features:
+        if col in sample_pandas_df.columns:
+            sample_pandas_df[col] = pd.to_numeric(sample_pandas_df[col], errors='coerce').fillna(0)
+        else: # Add missing numeric features with default 0
+            logger.warning(f"Numeric feature '{col}' missing in sample, adding with 0.")
+            sample_pandas_df[col] = 0
+            
+    for col in config.cat_features:
+        if col in sample_pandas_df.columns:
+            sample_pandas_df[col] = sample_pandas_df[col].fillna("missing").astype(str)
+        else: # Add missing categorical features with default 'missing'
+            logger.warning(f"Categorical feature '{col}' missing in sample, adding with 'missing'.")
+            sample_pandas_df[col] = "missing"
+            
+    features_for_prediction = config.num_features + config.cat_features
+    sample_pandas_df_for_input = sample_pandas_df[features_for_prediction]
+
+    logger.info("Sample data for prediction (Pandas DataFrame head):")
+    print(sample_pandas_df_for_input.head())
+    logger.info(f"Sample data columns for input: {sample_pandas_df_for_input.columns.tolist()}")
 
     logger.info("Loading the latest registered model and making predictions...")
-    # Re-initialize a FeatureLookUpModel instance to load the registered model
-    prediction_model_loader = FeatureLookUpModel(config=config, tags=tags, spark=spark)
+    prediction_model_loader = DefaultDetectionModel(config=config, tags=tags, spark=spark)
     
-    predictions_df = prediction_model_loader.load_latest_model_and_predict(sample_test_df_for_prediction)
+    predictions_series = prediction_model_loader.load_latest_model_and_predict(sample_pandas_df_for_input)
     
-    logger.info("Predictions completed. Displaying results:")
-    predictions_df.show()
+    logger.info("Predictions completed. Displaying results (Pandas Series):")
+    print(predictions_series)
 
 except Exception as e:
     logger.error(f"Error during sample prediction: {e}")
-    # dbutils.notebook.exit(f"Error during sample prediction: {e}") # Optional: exit notebook on error
 
 # COMMAND ----------
-logger.info("Feature Lookup Model pipeline notebook finished successfully.")
+logger.info("Default Detection Model pipeline notebook finished successfully.")
