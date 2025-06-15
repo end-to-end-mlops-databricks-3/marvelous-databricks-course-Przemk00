@@ -1,4 +1,4 @@
-"""Unit tests for PocessModeling."""
+"""Unit tests for DefaultDetectionModeling."""
 
 import mlflow
 import pandas as pd
@@ -12,21 +12,21 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
 from default_detection.config import ProjectConfig, Tags
-from default_detection.models.modeling_pipeline import PocessModeling
+from default_detection.models.default_detection_pipeline import DefaultDetectionModeling
 
 mlflow.set_tracking_uri(TRACKING_URI)
 
 
 def test_custom_model_init(config: ProjectConfig, tags: Tags, spark_session: SparkSession) -> None:
-    """Test the initialization of PocessModeling..
+    """Test the initialization of DefaultDetectionModeling..
 
-    This function creates a PocessModeling instance and asserts that its attributes are of the correct types.
+    This function creates a DefaultDetectionModeling instance and asserts that its attributes are of the correct types.
     :param config: Configuration for the project
     :param tags: Tags associated with the model
     :param spark_session: Spark session object
     """
-    model = PocessModeling(config=config, tags=tags, spark=spark_session, code_paths=[])
-    assert isinstance(model, PocessModeling)
+    model = DefaultDetectionModeling(config=config, tags=tags, spark=spark_session, code_paths=[])
+    assert isinstance(model, DefaultDetectionModeling)
     assert isinstance(model.config, ProjectConfig)
     assert isinstance(model.tags, dict)
     assert isinstance(model.spark, SparkSession)
@@ -34,12 +34,12 @@ def test_custom_model_init(config: ProjectConfig, tags: Tags, spark_session: Spa
     assert not model.code_paths
 
 
-def test_prepare_features(mock_custom_model: PocessModeling) -> None:
+def test_prepare_features(mock_custom_model: DefaultDetectionModeling) -> None:
     """Test that prepare_features method initializes pipeline components correctly..
 
     Verifies the preprocessor is a ColumnTransformer and pipeline contains expected
     ColumnTransformer and LGBMClassifier steps in sequence.
-    :param mock_custom_model: Mocked PocessModeling instance for testing
+    :param mock_custom_model: Mocked DefaultDetectionModeling instance for testing
     """
     mock_custom_model.prepare_features()
 
@@ -51,12 +51,12 @@ def test_prepare_features(mock_custom_model: PocessModeling) -> None:
     assert isinstance(mock_custom_model.pipeline.steps[1][1], LGBMClassifier)  # classifier
 
 
-def test_train(mock_custom_model: PocessModeling, expected_feature_names: list[str]) -> None:
+def test_train(mock_custom_model: DefaultDetectionModeling, expected_feature_names: list[str]) -> None:
     """Test that train method configures pipeline with correct feature handling..
 
     Validates feature count matches configuration and feature names align with
     numerical/categorical features defined in model config.
-    :param mock_custom_model: Mocked PocessModeling instance for testing
+    :param mock_custom_model: Mocked DefaultDetectionModeling instance for testing
     :param expected_feature_names: Fixture providing the expected feature names after preprocessing
     """
     mock_custom_model.load_data()
@@ -69,12 +69,14 @@ def test_train(mock_custom_model: PocessModeling, expected_feature_names: list[s
     assert sorted(expected_feature_names) == sorted(preprocessor.get_feature_names_out())
 
 
-def test_log_model_with_PandasDataset(mock_custom_model: PocessModeling, expected_feature_names: list[str]) -> None:
+def test_log_model_with_PandasDataset(
+    mock_custom_model: DefaultDetectionModeling, expected_feature_names: list[str]
+) -> None:
     """Test model logging with PandasDataset validation..
 
     Verifies that the model's pipeline captures correct feature dimensions and names,
     then checks proper dataset type handling during model logging.
-    :param mock_custom_model: Mocked PocessModeling instance for testing
+    :param mock_custom_model: Mocked DefaultDetectionModeling instance for testing
     :param expected_feature_names: Fixture providing the expected feature names after preprocessing
     """
     mock_custom_model.load_data()
@@ -107,13 +109,13 @@ def test_log_model_with_PandasDataset(mock_custom_model: PocessModeling, expecte
     assert loaded_model is not None
 
 
-def test_register_model(mock_custom_model: PocessModeling) -> None:
+def test_register_model(mock_custom_model: DefaultDetectionModeling) -> None:
     """Test the registration of a custom MLflow model..
 
     This function performs several operations on the mock custom model, including loading data,
     preparing features, training, and logging the model. It then registers the model and verifies
     its existence in the MLflow model registry.
-    :param mock_custom_model: A mocked instance of the PocessModeling class.
+    :param mock_custom_model: A mocked instance of the DefaultDetectionModeling class.
     """
     mock_custom_model.load_data()
     mock_custom_model.prepare_features()
@@ -143,12 +145,12 @@ def test_register_model(mock_custom_model: PocessModeling) -> None:
     assert int(model.aliases["Baseline"]) == model.latest_versions[-1].version
 
 
-def test_retrieve_current_run_metadata(mock_custom_model: PocessModeling) -> None:
+def test_retrieve_current_run_metadata(mock_custom_model: DefaultDetectionModeling) -> None:
     """Test retrieving the current run metadata from a mock custom model..
 
     This function verifies that the `retrieve_current_run_metadata` method
-    of the `PocessModeling` class returns metrics and parameters as dictionaries.
-    :param mock_custom_model: A mocked instance of the PocessModeling class.
+    of the `DefaultDetectionModeling` class returns metrics and parameters as dictionaries.
+    :param mock_custom_model: A mocked instance of the DefaultDetectionModeling class.
     """
     mock_custom_model.load_data()
     mock_custom_model.prepare_features()
@@ -162,7 +164,7 @@ def test_retrieve_current_run_metadata(mock_custom_model: PocessModeling) -> Non
     assert params
 
 
-def test_load_latest_model_and_predict(mock_custom_model: PocessModeling) -> None:
+def test_load_latest_model_and_predict(mock_custom_model: DefaultDetectionModeling) -> None:
     """Test the process of loading the latest model and making predictions..
 
     This function performs the following steps:
