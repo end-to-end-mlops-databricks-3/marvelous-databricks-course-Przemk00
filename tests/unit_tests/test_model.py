@@ -140,9 +140,9 @@ def test_register_model(mock_custom_model: DefaultDetectionModeling) -> None:
 
     assert isinstance(model, RegisteredModel)
     # Updated alias to match the one set in modeling_pipeline.py
-    # Ensure 'Baseline' alias exists and points to the latest version.
-    assert "Baseline" in model.aliases
-    assert int(model.aliases["Baseline"]) == model.latest_versions[-1].version
+    # Ensure 'Challenger' alias exists and points to the latest version.
+    assert "Challenger" in model.aliases
+    assert int(model.aliases["Challenger"]) == model.latest_versions[-1].version
 
 
 def test_retrieve_current_run_metadata(mock_custom_model: DefaultDetectionModeling) -> None:
@@ -182,6 +182,7 @@ def test_load_latest_model_and_predict(mock_custom_model: DefaultDetectionModeli
     mock_custom_model.register_model()
 
     columns = [
+        "ID",  # Added ID column
         "X1",
         "X2",
         "X3",
@@ -207,8 +208,9 @@ def test_load_latest_model_and_predict(mock_custom_model: DefaultDetectionModeli
         "X23",
     ]
     data = [
-        # Sample row 1 (corresponds to X1-X23)
+        # Sample row 1 (corresponds to ID, X1-X23)
         [
+            1,  # Added ID value
             50000,
             "1",
             "2",
@@ -235,6 +237,7 @@ def test_load_latest_model_and_predict(mock_custom_model: DefaultDetectionModeli
         ],
         # Sample row 2
         [
+            2,  # Added ID value
             20000,
             "2",
             "1",
@@ -264,6 +267,7 @@ def test_load_latest_model_and_predict(mock_custom_model: DefaultDetectionModeli
     input_data = pd.DataFrame(data, columns=columns)
 
     cols_types = {
+        "ID": "int32",  # Added ID type
         "X1": "int32",
         "X5": "int32",
         "X6": "int32",
