@@ -64,7 +64,7 @@ class ModelWrapper(mlflow.pyfunc.PythonModel):
         )
 
 
-class PocessModeling:
+class BaseDDModel:  # Renamed from PocessModeling
     """Baseline model class for default detection.
 
     This class encapsulates the workflow of loading data, preparing features,
@@ -72,7 +72,7 @@ class PocessModeling:
     """
 
     def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession, code_paths: list[str]) -> None:
-        """Initialize the DefaultDetectionBaselineModeling.
+        """Initialize the BaseDDModel.
 
         :param config: ProjectConfig object with num_features, cat_features, target, parameters, etc.
         :param tags: Tags for MLflow logging.
@@ -89,9 +89,10 @@ class PocessModeling:
         self.parameters = self.config.parameters
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
-        self.experiment_name = self.config.experiment_name
-        self.tags = tags.dict()
+        self.experiment_name = self.config.experiment_name_base_model  # Updated to use new config field
+        self.tags = tags.model_dump()
         self.code_paths = code_paths
+        self.run_id = None  # Initialize run_id
 
     def load_data(self) -> None:
         """Load training and testing data from Delta tables using Spark.
@@ -273,7 +274,7 @@ class PocessModeling:
             logger.info(f"  F1 Score:  {f1:.4f}")
 
             # Log parameters and metrics
-            mlflow.log_param("model_type", "LGBMClassifier_baseline_default_detection")
+            mlflow.log_param("model_type", "LGBMClassifier_base_dd_model")  # Updated model_type
             mlflow.log_params(self.parameters)  # Log final parameters used
             mlflow.log_metric("test_accuracy", accuracy)
             mlflow.log_metric("test_precision", precision)
@@ -284,14 +285,14 @@ class PocessModeling:
             if dataset_type == "PandasDataset":
                 dataset_log = mlflow.data.from_pandas(
                     self.train_set_features_for_logging,  # This is X_train
-                    name="train_set_features_default_detection_baseline",
+                    name="train_set_features_base_dd_model",  # Updated name
                 )
             elif dataset_type == "SparkDataset":
                 # Create Spark DataFrame from X_train for logging if needed, or use original train_set_spark with select
                 train_set_spark_features = self.train_set_spark.select(self.num_features + self.cat_features)
                 dataset_log = mlflow.data.from_spark(
                     train_set_spark_features,
-                    name=f"{self.catalog_name}.{self.schema_name}.train_set_features_baseline",
+                    name=f"{self.catalog_name}.{self.schema_name}.train_set_features_base_dd",  # Updated name
                     version=self.data_version,  # Use the determined data version
                 )
             else:
@@ -339,14 +340,14 @@ class PocessModeling:
 
             mlflow.pyfunc.log_model(
                 python_model=ModelWrapper(self.pipeline),  # Pass the scikit-learn pipeline
-                artifact_path="pyfunc_default_detection_model",  # New artifact path
+                artifact_path="pyfunc_base_dd_model",  # Updated artifact path
                 # artifacts dictionary removed as no extra artifacts for this baseline
                 code_paths=self.code_paths,
                 conda_env=conda_env,
                 signature=signature,
                 input_example=input_example_df,
             )
-            logger.info(f"✅ Baseline model logged with run_id: {self.run_id}")
+            logger.info(f"✅ Base model logged with run_id: {self.run_id}")
 
     def register_model(self) -> None:
         """Register the trained baseline model in MLflow Model Registry."""
@@ -354,19 +355,19 @@ class PocessModeling:
             logger.error("Run ID not found. Please run log_model first before registering.")
             return
 
-        logger.info("🔄 Registering the baseline model in UC...")
-        model_name = f"{self.catalog_name}.{self.schema_name}.default_detection_model"  # New model name
+        logger.info("🔄 Registering the base model in UC...")
+        model_name = f"{self.catalog_name}.{self.schema_name}.base_dd_model"  # Updated model name
 
         registered_model = mlflow.register_model(
-            model_uri=f"runs:/{self.run_id}/pyfunc_default_detection_model",  # Use new artifact path
+            model_uri=f"runs:/{self.run_id}/pyfunc_base_dd_model",  # Use updated artifact path
             name=model_name,
             tags=self.tags,
         )
-        logger.info(f"✅ Baseline model registered as '{model_name}' version {registered_model.version}.")
+        logger.info(f"✅ Base model registered as '{model_name}' version {registered_model.version}.")
 
         latest_version = registered_model.version
         client = MlflowClient()
-        alias_name = "Baseline"  # Example alias for this model
+        alias_name = "BaseDDModel"  # Updated alias for this model
         try:
             client.set_registered_model_alias(
                 name=model_name,
@@ -406,24 +407,26 @@ class PocessModeling:
         logger.info("✅ Run metadata (metrics, params) loaded for current run.")
         return metrics, params
 
-    def load_latest_model_and_predict(self, input_data: pd.DataFrame, alias: str = "Baseline") -> pd.DataFrame | None:
+    def load_latest_model_and_predict(
+        self, input_data: pd.DataFrame, alias: str = "BaseDDModel"
+    ) -> pd.DataFrame | None:
         """Load the latest baseline model (by alias) from MLflow and make predictions.
 
         :param input_data: Input DataFrame with features for prediction.
-        :param alias: The model alias to load (e.g., "Baseline").
+        :param alias: The model alias to load (e.g., "BaseDDModel").
         :return: Predictions as a DataFrame (prediction, probability_default), or None if error.
         """
-        model_name = f"{self.catalog_name}.{self.schema_name}.default_detection_model"  # Use new model name
-        logger.info(f"🔄 Loading baseline model '{model_name}@{alias}' from MLflow...")
+        model_name = f"{self.catalog_name}.{self.schema_name}.base_dd_model"  # Use updated model name
+        logger.info(f"🔄 Loading base model '{model_name}@{alias}' from MLflow...")
 
         try:
             model_uri = f"models:/{model_name}@{alias}"
             model = mlflow.pyfunc.load_model(model_uri)
-            logger.info("✅ Baseline model successfully loaded.")
+            logger.info("✅ Base model successfully loaded.")
 
             # ModelWrapper expects a DataFrame with feature columns
             predictions_df = model.predict(input_data)
             return predictions_df
         except Exception as e:
-            logger.error(f"Error loading baseline model or making predictions: {e}")
+            logger.error(f"Error loading base model or making predictions: {e}")
             return None

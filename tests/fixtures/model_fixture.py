@@ -14,7 +14,7 @@ from pyspark.sql import SparkSession
 
 from default_detection import PROJECT_DIR
 from default_detection.config import ProjectConfig, Tags
-from default_detection.models.modeling_pipeline import PocessModeling
+from default_detection.models.default_detection_pipeline import DefaultDetectionModeling
 
 
 @pytest.fixture(scope="session")
@@ -92,7 +92,7 @@ def build_whl_file() -> str:
 @pytest.fixture(scope="function")
 def mock_custom_model(
     config: ProjectConfig, tags: Tags, spark_session: SparkSession, build_whl_file: str
-) -> PocessModeling:  # Removed banned_client_list_path from parameters
+) -> DefaultDetectionModeling:  # Removed banned_client_list_path from parameters
     """Fixture that provides a CustomModel instance with mocked Spark interactions..
 
     Initializes the model with test data and mocks Spark DataFrame conversions to pandas.
@@ -104,11 +104,15 @@ def mock_custom_model(
     :return: Configured PocessModeling instance with mocked Spark interactions
     """
     whl_file_name_from_fixture = build_whl_file  # Use the value from the fixture
-    instance = PocessModeling(
+    dummy_high_risk_csv_path = (PROJECT_DIR / "tests" / "test_data" / "dummy_high_risk.csv").as_posix()
+    instance = DefaultDetectionModeling(
         config=config,
         tags=tags,
         spark=spark_session,
         code_paths=[f"{PROJECT_DIR.as_posix()}/dist/{whl_file_name_from_fixture}"],
+        high_risk_artifact_path_for_logging=dummy_high_risk_csv_path,  # Added this line
+        client_id_col_name="ID",  # Ensure this matches the data
+        client_id_col_in_artifact="client_identifier",  # Ensure this matches the dummy csv header
     )
     # instance.banned_client_path = banned_client_list_path # Removed usage
 

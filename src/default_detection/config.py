@@ -20,7 +20,8 @@ class ProjectConfig(BaseModel):
     schema_name: str
     parameters: dict[str, Any]
     hyperparameters_tuning: bool = False
-    experiment_name: str
+    experiment_name_base_model: str
+    experiment_name_feature_lookup: str
 
     @classmethod
     def from_yaml(cls, config_path: str, env: str = "dev") -> "ProjectConfig":

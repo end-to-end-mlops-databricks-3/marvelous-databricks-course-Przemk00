@@ -14,7 +14,7 @@ from pyspark.sql import SparkSession
 
 sys.path.append(str(Path.cwd().parent / "src"))
 from default_detection.config import ProjectConfig, Tags
-from default_detection.models.modeling_pipeline import PocessModeling
+from default_detection.models.base_dd_model import BaseDDModel
 
 base_dir = os.path.abspath(str(Path.cwd().parent))
 config_path = os.path.join(base_dir, "project_config.yml")
@@ -71,31 +71,31 @@ except (argparse.ArgumentError, SystemExit):
 
 # COMMAND ----------
 
-config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
+config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev") # Ensure this path is correct for your execution context
 
 spark = SparkSession.builder.getOrCreate()
 tags = Tags(**{"git_sha": "abcd12345", "branch": "week2","job_run_id": "1234567890"})
 # COMMAND ----------
 
 # Initialize model
-modeling_ppl = PocessModeling(
-    config=config, tags=tags, spark=spark, code_paths=["../src/default_detection/models/modeling_pipeline.py"]
+custom_model = BaseDDModel(
+    config=config, tags=tags, spark=spark, code_paths=["../dist/default_detection-0.0.1-py3-none-any.whl"]
 )
 logger.info("Model initialized.")
 
 # COMMAND ----------
 # Load data and prepare features
-modeling_ppl.load_data()
-modeling_ppl.prepare_features()
+custom_model.load_data()
+custom_model.prepare_features()
 logger.info("Loaded data, prepared features.")
 
 # Train + log the model (runs everything including MLflow logging)
 if config.hyperparameters_tuning:
-    modeling_ppl.tune_hyperparameters()
-modeling_ppl.train()
-modeling_ppl.log_model()
+    custom_model.tune_hyperparameters()
+custom_model.train()
+custom_model.log_model()
 logger.info("Model training completed.")
 
-modeling_ppl.register_model()
+custom_model.register_model()
 logger.info("Registered model")
 # COMMAND ----------
