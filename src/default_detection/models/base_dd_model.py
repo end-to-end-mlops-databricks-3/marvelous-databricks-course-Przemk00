@@ -90,7 +90,7 @@ class BaseDDModel:  # Renamed from PocessModeling
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
         self.experiment_name = self.config.experiment_name_base_model  # Updated to use new config field
-        self.tags = tags.dict()
+        self.tags = tags.model_dump()
         self.code_paths = code_paths
         self.run_id = None  # Initialize run_id
 

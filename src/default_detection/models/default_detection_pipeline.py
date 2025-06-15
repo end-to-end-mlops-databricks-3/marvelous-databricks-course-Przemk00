@@ -170,7 +170,7 @@ class DefaultDetectionModeling:  # Renamed from PocessModeling
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
         self.experiment_name = f"{self.config.schema_name}_dd_experiment"
-        self.tags = tags.dict()
+        self.tags = tags.model_dump()
         self.code_paths = code_paths
 
         # New parameters for high-risk adjustment

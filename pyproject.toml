@@ -58,6 +58,9 @@ version = { file = "version.txt" }
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
 pythonpath = [ "." ]
+markers = [
+    "order: to specify test execution order"
+]
 
 # [lint.pydocstyle]
 # convention = "sphinx"

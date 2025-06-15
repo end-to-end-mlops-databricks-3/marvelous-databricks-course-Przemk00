@@ -101,7 +101,7 @@ def test_log_model_with_PandasDataset(
     assert len(runs) == 1
     latest_run = runs[0]
 
-    model_uri = f"runs:/{latest_run.info.run_id}/pyfunc_default_detection_model"
+    model_uri = f"runs:/{latest_run.info.run_id}/pyfunc-default-detection-model"
     logger.info(f"{model_uri= }")
 
     assert model_uri
@@ -299,11 +299,15 @@ def test_load_latest_model_and_predict(mock_custom_model: DefaultDetectionModeli
 
     assert predictions is not None
     assert isinstance(predictions, pd.DataFrame)
-    assert len(predictions.columns) == 2
-    assert "prediction" in predictions.columns
-    assert "probability_default" in predictions.columns
+    assert len(predictions.columns) == 3
+    assert mock_custom_model.client_id_col_name in predictions.columns  # "ID"
+    assert "adjusted_probability_default" in predictions.columns
+    assert "final_prediction" in predictions.columns
     assert len(predictions) == len(input_data)
+    # Check dtypes for the new columns
     assert (
-        predictions["prediction"].dtype == "int64" or predictions["prediction"].dtype == "int32"
-    )  # LGBM output type for classification
-    assert predictions["probability_default"].dtype == "float64"  # Probabilities are float
+        predictions[mock_custom_model.client_id_col_name].dtype
+        == input_data[mock_custom_model.client_id_col_name].dtype
+    )
+    assert predictions["final_prediction"].dtype == "int64" or predictions["final_prediction"].dtype == "int32"
+    assert predictions["adjusted_probability_default"].dtype == "float64"
